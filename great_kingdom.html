@@ -1,0 +1,2348 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Great Kingdom</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #34495e;
+            --accent-blue: #3498db;
+            --accent-orange: #e67e22;
+            --plastic-color: #ecf0f1;
+            --plastic-shadow: #bdc3c7;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            max-width: 1200px;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .left-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: auto repeat(9, 50px);
+            grid-template-rows: auto repeat(9, 50px);
+            gap: 2px;
+            margin-bottom: 20px;
+            background: var(--plastic-color);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px var(--plastic-shadow);
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 2px solid var(--plastic-shadow);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 16px;
+            background: white;
+            transition: all 0.3s ease;
+            position: relative;
+            border-radius: 5px;
+        }
+
+        .cell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+        }
+
+        .clickable {
+            cursor: pointer;
+        }
+
+        .gray {
+            background: var(--plastic-shadow);
+        }
+
+        .coordinate {
+            background: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .castle {
+            width: 30px;
+            height: 30px;
+            position: relative;
+        }
+
+        .castle::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: currentColor;
+            clip-path: polygon(50% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        }
+
+    .record {
+        display: flex;
+            flex-wrap: nowrap;
+            gap: 10px;
+            width: 400px;
+            height: 500px;
+            border: 2px solid var(--plastic-shadow);
+            padding: 15px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            font-size: 14px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+    .record-column {
+        display: flex;
+        flex-direction: column;
+            flex: 0 0 auto;
+            width: 100px;
+    }
+
+    .record-entry {
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 5px;
+            border-radius: 5px;
+            background: var(--plastic-color);
+        }
+   
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-top: 3px;
+            font-size: 14px;
+            border: none;
+            border-radius: 5px;
+            background: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+        }
+
+        button:disabled {
+            background: var(--plastic-shadow);
+            cursor: not-allowed;
+        }
+
+        .stats {
+            margin-top: 20px;
+            font-size: 16px;
+            text-align: center;
+            padding: 15px;
+            background: var(--plastic-color);
+            border-radius: 10px;
+            width: 100%;
+        }
+
+        h4 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .grid-container {
+                grid-template-columns: auto repeat(9, 40px);
+                grid-template-rows: auto repeat(9, 40px);
+            }
+
+            .cell {
+                width: 40px;
+                height: 40px;
+            }
+
+            .record {
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            padding: 10px;
+            background: var(--primary-color);
+            color: white;
+            font-size: 14px;
+        }
+        
+        .footer p {
+            margin: 5px 0;
+        }
+
+        .player-seats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .seat {
+            width: 150px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            background: var(--plastic-color);
+            box-shadow: 0 5px 15px var(--plastic-shadow);
+            transition: all 0.3s ease;
+        }
+
+        .seat.occupied {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .seat.blue {
+            border: 3px solid var(--accent-blue);
+        }
+
+        .seat.orange {
+            border: 3px solid var(--accent-orange);
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .chat-messages {
+            height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            border-bottom: 1px solid var(--plastic-shadow);
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--plastic-shadow);
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        .chat-input button {
+            padding: 8px 15px;
+        }
+
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 5px;
+            background: var(--plastic-color);
+        }
+
+        .message.system {
+            background: var(--primary-color);
+            color: white;
+            text-align: center;
+        }
+
+        .territory-flag {
+            width: 20px;
+            height: 20px;
+            position: relative;
+            margin: auto;
+        }
+        
+        .territory-flag::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 2px;
+            height: 20px;
+            background-color: currentColor;
+        }
+        
+        .territory-flag::after {
+            content: '';
+            position: absolute;
+            left: 2px;
+            top: 2px;
+            width: 12px;
+            height: 8px;
+            background-color: currentColor;
+            clip-path: polygon(0 0, 100% 0, 80% 50%, 100% 100%, 0 100%);
+        }
+
+        .mode-selector {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .mode-selector button {
+            margin: 0 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-selector button.active {
+            background: var(--accent-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+        }
+
+        .mode-selector button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="mode-selector">
+            <button onclick="setGameMode('normal')" id="normalMode">일반 모드</button>
+            <button onclick="setGameMode('local')" id="localMode">로컬 모드</button>
+        </div>
+        <div class="player-seats">
+            <div class="seat" id="seat1">
+                <h4>플레이어 1 (청)</h4>
+                <p>대기중...</p>
+                <div class="seat-buttons">
+                    <button onclick="takeSeat(1, 'player')">플레이어 선택</button>
+                    <button onclick="takeSeat(1, 'ai')">AI 선택</button>
+                </div>
+            </div>
+            <div class="seat" id="seat2">
+                <h4>플레이어 2  (주황)</h4>
+                <p>대기중...</p>
+                <div class="seat-buttons">
+                    <button onclick="takeSeat(2, 'player')">플레이어 선택</button>
+                    <button onclick="takeSeat(2, 'ai')">AI 선택</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="left-container">
+<h4><center>Great Kingdom For Replay<center></h4>
+            <div class="grid-container" id="grid"></div>
+            <div class="buttons">
+                <button id="undo">Back</button>
+                <button id="redo">Redo</button>
+            </div>
+            <div class="stats" id="stats"></div>
+        </div>
+        <center><h4><center>Record<center></h4><div class="record" id="record"></div><center>
+    </div>
+
+    <div class="chat-container">
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input">
+            <input type="text" id="chatInput" placeholder="메시지를 입력하세요...">
+            <button onclick="sendMessage()">전송</button>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Author: Gyoo</p>
+    </div>
+
+    <script>
+        const grid = document.getElementById('grid');
+        const record = document.getElementById('record');
+        const undoBtn = document.getElementById('undo');
+        const redoBtn = document.getElementById('redo');
+        const stats = document.getElementById('stats');
+        const COLS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+        let clickCount = 0;
+        let clickHistory = [];
+        let redoStack = [];
+        let blueCells = 0;
+        let yellowCells = 0;
+        let currentColumn = 0;
+        let currentRow = 0;
+        let currentPlayer = null;
+        let gameStarted = false;
+        let firstPlayer = null;
+        let isAIEnabled = false;
+        let AIPlayer = null;
+        let isLocalMode = false;
+
+        // 격자판 생성
+        grid.appendChild(document.createElement('div'));
+        for (let col of COLS) {
+            const colHeader = document.createElement('div');
+            colHeader.className = 'cell coordinate';
+            colHeader.textContent = col;
+            grid.appendChild(colHeader);
+        }
+
+        for (let i = 1; i <= 9; i++) {
+            const rowHeader = document.createElement('div');
+            rowHeader.className = 'cell coordinate';
+            rowHeader.textContent = i;
+            grid.appendChild(rowHeader);
+
+            for (let j = 0; j < 9; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell clickable';
+                cell.id = `${COLS[j]}${i}`;
+                
+                if (i === 5 && j === 4) {
+                    cell.classList.add('gray');
+                    cell.classList.remove('clickable');
+                } else {
+                    cell.addEventListener('click', handleClick);
+                }
+                
+                grid.appendChild(cell);
+            }
+        }
+
+        function takeSeat(seatNumber, type) {
+            const seat = document.getElementById(`seat${seatNumber}`);
+            
+            // 이미 선택된 좌석인지 확인
+            if (seat.classList.contains('occupied')) {
+                addChatMessage('system', '이미 선택된 좌석입니다.');
+                return;
+            }
+
+            // AI vs AI 모드 허용
+            if (type === 'player' && currentPlayer) {
+                addChatMessage('system', '이미 다른 좌석을 선택하셨습니다.');
+                return;
+            }
+
+            seat.classList.add('occupied');
+            seat.classList.add(seatNumber === 1 ? 'blue' : 'orange');
+            
+            // 버튼들 숨기기
+            const buttons = seat.querySelector('.seat-buttons');
+            buttons.style.display = 'none';
+
+            if (type === 'player') {
+                seat.querySelector('p').textContent = '플레이어';
+                currentPlayer = seatNumber;
+            } else {
+                seat.querySelector('p').textContent = 'AI 플레이어';
+                if (AIPlayer === null) {
+                    AIPlayer = seatNumber;
+                }
+                isAIEnabled = true;
+            }
+
+            // 양쪽 좌석이 모두 찼는지 확인
+            const otherSeat = document.getElementById(`seat${seatNumber === 1 ? 2 : 1}`);
+            if (otherSeat.classList.contains('occupied')) {
+                startGame();
+            }
+        }
+
+        function startGame() {
+            gameStarted = true;
+            firstPlayer = 1;  // 항상 청이 선공
+            
+            // AI vs AI 모드 체크
+            const isAIvsAI = document.getElementById('seat1').querySelector('p').textContent === 'AI 플레이어' &&
+                            document.getElementById('seat2').querySelector('p').textContent === 'AI 플레이어';
+            
+            if (isAIvsAI) {
+                addChatMessage('system', '게임이 시작되었습니다! AI vs AI 모드입니다!');
+                // 첫 번째 AI의 수
+                setTimeout(() => {
+                    AIMove();
+                }, 1000);
+            } else if (AIPlayer === 1) {
+                addChatMessage('system', '게임이 시작되었습니다! AI(청)가 선공입니다!');
+                setTimeout(() => {
+                    AIMove();
+                }, 1000);
+            } else {
+                const firstPlayerText = currentPlayer === 1 ? '플레이어(청)' : 'AI(청)';
+                addChatMessage('system', `게임이 시작되었습니다! ${firstPlayerText}가 선공입니다!`);
+            }
+        }
+
+        function handleClick(event) {
+            if (!gameStarted) {
+                addChatMessage('system', '게임이 시작되지 않았습니다.');
+                return;
+            }
+
+            // AI vs AI 모드에서는 클릭 무시
+            const isAIvsAI = document.getElementById('seat1').querySelector('p').textContent === 'AI 플레이어' &&
+                            document.getElementById('seat2').querySelector('p').textContent === 'AI 플레이어';
+            if (isAIvsAI) {
+                addChatMessage('system', 'AI vs AI 모드에서는 수를 둘 수 없습니다.');
+                return;
+            }
+
+            const cell = event.target;
+            const currentTurn = clickCount % 2 === 0 ? 1 : 2;
+            const color = currentTurn === 1 ? 'var(--accent-blue)' : 'var(--accent-orange)';
+
+            // 로컬 모드에서는 단순히 유효한 수인지만 확인
+            if (isLocalMode) {
+                // 단순히 빈 칸인지만 확인
+                if (cell.style.backgroundColor || cell.classList.contains('gray')) {
+                    addChatMessage('system', '그 곳에는 둘 수 없습니다.');
+                    return;
+                }
+
+                clickCount++;
+            cell.style.backgroundColor = color;
+                const castle = document.createElement('div');
+                castle.className = 'castle';
+                castle.style.color = color;
+                cell.innerHTML = '';
+                cell.appendChild(castle);
+            cell.removeEventListener('click', handleClick);
+            cell.classList.remove('clickable');
+
+            addRecord(cell.id, color, clickCount);
+                clickHistory.push({id: cell.id, color: color, count: clickCount});
+                redoStack = [];
+                updateButtonState();
+
+                // 돌을 잡는 로직
+                const capturedGroups = findCapturedGroups();
+                let capturedCount = 0;
+                
+                for (let group of capturedGroups) {
+                    const capturedCell = document.getElementById(group[0]);
+                    if (capturedCell && !capturedCell.classList.contains('gray')) {
+                        const capturedColor = capturedCell.style.backgroundColor;
+                        if (capturedColor !== color) {
+                            capturedCount += group.length;
+                            for (let id of group) {
+                                const cell = document.getElementById(id);
+                                if (cell && !cell.classList.contains('gray')) {
+                                    cell.style.backgroundColor = '';
+                                    cell.innerHTML = '';
+                                    cell.classList.add('clickable');
+                                    cell.addEventListener('click', handleClick);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (capturedCount > 0) {
+                    const currentPlayerText = color === 'var(--accent-blue)' ? '청' : '주황';
+                    addChatMessage('system', `${currentPlayerText}이(가) ${capturedCount}개의 돌을 잡았습니다!`);
+                    
+                    if (capturedCount >= 1) {
+                        gameStarted = false;
+                        addChatMessage('system', `${currentPlayerText}의 승리! ${capturedCount}개의 돌을 잡아 게임이 종료되었습니다.`);
+                        return;
+                    }
+                }
+
+                checkAndFillSurroundedAreas();
+                updateStats();
+                return;
+            }
+
+            // 일반 모드의 기존 로직
+            if (isAIEnabled && currentTurn === AIPlayer) {
+                addChatMessage('system', 'AI의 차례입니다.');
+                return;
+            }
+
+            if (currentPlayer !== currentTurn) {
+                addChatMessage('system', '당신의 차례가 아닙니다.');
+                return;
+            }
+
+            // 유효한 수인지 확인
+            if (!isValidMove(cell.id, color)) {
+                addChatMessage('system', '그 곳에는 둘 수 없습니다.');
+                return;
+            }
+
+            clickCount++;
+            
+            cell.style.backgroundColor = color;
+            const castle = document.createElement('div');
+            castle.className = 'castle';
+            castle.style.color = color;
+            cell.innerHTML = '';
+            cell.appendChild(castle);
+            cell.removeEventListener('click', handleClick);
+            cell.classList.remove('clickable');
+
+            addRecord(cell.id, color, clickCount);
+            clickHistory.push({id: cell.id, color: color, count: clickCount});
+            redoStack = [];
+            updateButtonState();
+
+            // 돌을 잡는 로직
+            const capturedGroups = findCapturedGroups();
+            let capturedCount = 0;
+            
+            for (let group of capturedGroups) {
+                const capturedCell = document.getElementById(group[0]);
+                if (capturedCell && !capturedCell.classList.contains('gray')) {
+                    const capturedColor = capturedCell.style.backgroundColor;
+                    if (capturedColor !== color) {
+                        capturedCount += group.length;
+                        for (let id of group) {
+                            const cell = document.getElementById(id);
+                            if (cell && !cell.classList.contains('gray')) {
+                                cell.style.backgroundColor = '';
+                                cell.innerHTML = '';
+                                cell.classList.add('clickable');
+                                cell.addEventListener('click', handleClick);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (capturedCount > 0) {
+                const currentPlayerText = color === 'var(--accent-blue)' ? '청' : '주황';
+                addChatMessage('system', `${currentPlayerText}이(가) ${capturedCount}개의 돌을 잡았습니다!`);
+                
+                if (capturedCount >= 1) {
+                    gameStarted = false;
+                    addChatMessage('system', `${currentPlayerText}의 승리! ${capturedCount}개의 돌을 잡아 게임이 종료되었습니다.`);
+                    return;
+                }
+            }
+
+            checkAndFillSurroundedAreas();
+            updateStats();
+
+            // AI 턴 체크 (로컬 모드가 아닐 때만)
+            if (!isLocalMode && isAIEnabled) {
+                const nextTurn = clickCount % 2 === 0 ? 1 : 2;
+                if (nextTurn === AIPlayer) {
+                    setTimeout(() => {
+                        AIMove();
+                    }, 1000);
+                }
+            }
+        }
+
+        function addRecord(id, color, count) {
+            if (currentRow >= 20) {
+                currentColumn++;
+                currentRow = 0;
+            }
+
+            if (currentRow === 0) {
+                const column = document.createElement('div');
+                column.className = 'record-column';
+                record.appendChild(column);
+            }
+
+            const recordEntry = document.createElement('div');
+            recordEntry.className = 'record-entry';
+            recordEntry.textContent = `${count}. ${id}`;
+            recordEntry.style.color = color;
+
+            const columns = record.getElementsByClassName('record-column');
+            columns[currentColumn].appendChild(recordEntry);
+
+            currentRow++;
+        }
+
+        function resetRecord() {
+            record.innerHTML = '';
+            currentColumn = 0;
+            currentRow = 0;
+        }
+
+        function undo() {
+            if (clickHistory.length === 0) return;
+            
+            const lastClick = clickHistory.pop();
+            redoStack.push(lastClick);
+            
+            const cell = document.getElementById(lastClick.id);
+            cell.style.backgroundColor = '';
+            cell.style.color = '';
+            cell.textContent = '';
+            cell.addEventListener('click', handleClick);
+            cell.classList.add('clickable');
+
+            resetRecord();
+            clickHistory.forEach(click => {
+                addRecord(click.id, click.color, click.count);
+            });
+
+            clickCount--;
+            updateButtonState();
+
+            // Undo 후 둘러싸인 영역 다시 체크
+            resetAllCells();
+            clickHistory.forEach(click => {
+                const cell = document.getElementById(click.id);
+                cell.style.backgroundColor = click.color;
+                cell.textContent = click.count;
+                cell.removeEventListener('click', handleClick);
+                cell.classList.remove('clickable');
+            });
+            checkAndFillSurroundedAreas();
+            updateStats();
+        }
+
+        function redo() {
+            if (!gameStarted || currentPlayer !== firstPlayer) {
+                addChatMessage('system', '게임이 끝난 후 첫 번째 플레이어만 되돌릴 수 있습니다.');
+                return;
+            }
+
+            if (redoStack.length === 0) return;
+            
+            const nextClick = redoStack.pop();
+            clickHistory.push(nextClick);
+            
+            const cell = document.getElementById(nextClick.id);
+            cell.style.backgroundColor = nextClick.color;
+            cell.textContent = nextClick.count;
+            cell.removeEventListener('click', handleClick);
+            cell.classList.remove('clickable');
+
+            addRecord(nextClick.id, nextClick.color, nextClick.count);
+            clickCount++;
+            updateButtonState();
+
+            // Redo 후 둘러싸인 영역 다시 체크
+            checkAndFillSurroundedAreas();
+            updateStats();
+        }
+
+        function updateButtonState() {
+            undoBtn.disabled = clickHistory.length === 0;
+            redoBtn.disabled = redoStack.length === 0;
+        }
+
+        function findEmptyRegions() {
+            const N = 9;
+            const visited = new Set();
+            const regions = [];  // 각 요소는 {cells: Set, borderingPlayers: Set} 형태
+
+            for (let row = 1; row <= N; row++) {
+                for (let col = 0; col < N; col++) {
+                    const id = `${COLS[col]}${row}`;
+                    if (visited.has(id)) continue;
+
+                    const cell = document.getElementById(id);
+                    if (!cell || cell.style.backgroundColor || cell.classList.contains('gray')) continue;
+
+                    // 새로운 지역 발견 → BFS 시작
+                    const queue = [[col, row]];
+                    const cells = new Set([id]);
+                    const borderingPlayers = new Set();
+                    visited.add(id);
+
+                    while (queue.length > 0) {
+                        const [x, y] = queue.shift();
+                        
+                        // 상하좌우만 체크
+                        const directions = [[-1,0], [1,0], [0,-1], [0,1]];
+                        
+                        for (let [dx, dy] of directions) {
+                            const nx = x + dx;
+                            const ny = y + dy;
+                            
+                            if (nx >= 0 && nx < N && ny >= 1 && ny <= N) {
+                                const newId = `${COLS[nx]}${ny}`;
+                                const neighbor = document.getElementById(newId);
+                                
+                                if (!neighbor) continue;
+                                
+                                if (!neighbor.style.backgroundColor && !neighbor.classList.contains('gray') && !visited.has(newId)) {
+                                    visited.add(newId);
+                                    cells.add(newId);
+                                    queue.push([nx, ny]);
+                                } else if (neighbor.style.backgroundColor) {
+                                    if (neighbor.style.backgroundColor === 'var(--accent-blue)') {
+                                        borderingPlayers.add('blue');
+                                    } else if (neighbor.style.backgroundColor === 'var(--accent-orange)') {
+                                        borderingPlayers.add('orange');
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    regions.push({cells, borderingPlayers});
+                }
+            }
+            
+            return regions;
+        }
+
+        function checkAndFillSurroundedAreas() {
+            // 첫 수는 영역 체크를 하지 않음
+            if (clickCount <= 1) {
+            blueCells = 0;
+            yellowCells = 0;
+                clearAllFlags();
+                updateStats();
+                return;
+            }
+            
+            // 영역 카운트 초기화
+            blueCells = 0;
+            yellowCells = 0;
+            
+            // 이전에 표시된 모든 깃발 제거
+            clearAllFlags();
+            
+            // 모든 빈 영역 찾기
+            const regions = findEmptyRegions();
+            
+            // 각 영역의 소유권 판정
+            for (let {cells, borderingPlayers} of regions) {
+                if (borderingPlayers.size === 1) {
+                    if (borderingPlayers.has('blue')) {
+                        blueCells += cells.size;
+                        cells.forEach(id => markTerritory(id, 'var(--accent-blue)'));
+                    } else if (borderingPlayers.has('orange')) {
+                        yellowCells += cells.size;
+                        cells.forEach(id => markTerritory(id, 'var(--accent-orange)'));
+                    }
+                }
+            }
+            
+            updateStats();
+        }
+
+        function clearAllFlags() {
+            for (let i = 1; i <= 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    const id = `${COLS[j]}${i}`;
+                    const cell = document.getElementById(id);
+                    if (cell && !cell.style.backgroundColor && !cell.classList.contains('gray')) {
+                        while (cell.firstChild) {
+                            cell.removeChild(cell.firstChild);
+                        }
+                    }
+                }
+            }
+        }
+
+        function markTerritory(id, color) {
+            const cell = document.getElementById(id);
+            if (!cell) return;
+            
+            // 기존 깃발이 있다면 제거
+            while (cell.firstChild) {
+                cell.removeChild(cell.firstChild);
+            }
+            
+            // 깃발 생성
+            const flag = document.createElement('div');
+            flag.className = 'territory-flag';
+            flag.style.color = color;
+            cell.appendChild(flag);
+        }
+
+        // 돌이 잡힐 수 있는지 확인 (중립성 고려)
+        function isCapturePossible(position, color) {
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            
+            // 상하좌우 방향
+            const directions = [[-1,0], [1,0], [0,-1], [0,1]];
+            
+            // 각 방향에서 중립성을 통한 포위 확인
+            for (let [dx, dy] of directions) {
+                const newColIdx = colIdx + dx;
+                const newRow = rowNum + dy;
+                
+                if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                    const adjacentId = `${COLS[newColIdx]}${newRow}`;
+                    const adjacentCell = document.getElementById(adjacentId);
+                    
+                    // 인접한 칸이 중립성인 경우
+                    if (adjacentCell && adjacentCell.classList.contains('gray')) {
+                        // 중립성 반대편 확인
+                        const oppositeColIdx = colIdx - dx;
+                        const oppositeRow = rowNum - dy;
+                        
+                        if (oppositeColIdx >= 0 && oppositeColIdx < COLS.length && oppositeRow >= 1 && oppositeRow <= 9) {
+                            const oppositeId = `${COLS[oppositeColIdx]}${oppositeRow}`;
+                            const oppositeCell = document.getElementById(oppositeId);
+                            
+                            // 반대편에 상대 돌이 있으면 포위 가능
+                            if (oppositeCell && oppositeCell.style.backgroundColor === 
+                                (color === 'var(--accent-blue)' ? 'var(--accent-orange)' : 'var(--accent-blue)')) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return false;
+        }
+
+        // 활로 계산 시 중립성 고려
+        function countLiberties(id) {
+            const [col, row] = id.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            let libertyCount = 0;
+            let hasNeutralConnection = false;
+            
+            // 상하좌우 방향 검사
+            const directions = [[-1,0], [1,0], [0,-1], [0,1]];
+            
+            for (let [dx, dy] of directions) {
+                const newColIdx = colIdx + dx;
+                const newRow = rowNum + dy;
+                
+                if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                    const newId = `${COLS[newColIdx]}${newRow}`;
+                    const cell = document.getElementById(newId);
+                    
+                    if (cell) {
+                        if (!cell.style.backgroundColor && !cell.classList.contains('gray')) {
+                            libertyCount++;
+                        } else if (cell.classList.contains('gray')) {
+                            // 중립성이 있는 경우, 반대편 확인
+                            const oppositeColIdx = colIdx + dx * 2;
+                            const oppositeRow = rowNum + dy * 2;
+                            
+                            if (oppositeColIdx >= 0 && oppositeColIdx < COLS.length && oppositeRow >= 1 && oppositeRow <= 9) {
+                                const oppositeId = `${COLS[oppositeColIdx]}${oppositeRow}`;
+                                const oppositeCell = document.getElementById(oppositeId);
+                                
+                                if (oppositeCell && !oppositeCell.style.backgroundColor) {
+                                    hasNeutralConnection = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 중립성을 통한 연결이 있으면 활로 감소
+            return hasNeutralConnection ? Math.max(0, libertyCount - 1) : libertyCount;
+        }
+
+        // 상대 영역 침범 방지 강화
+        function isValidMove(id, color) {
+            const cell = document.getElementById(id);
+            if (!cell || cell.style.backgroundColor || cell.classList.contains('gray')) {
+                return false;
+            }
+
+            // 상대방의 영역인지 확인 (더 엄격하게)
+            const regions = findEmptyRegions();
+            for (let {cells, borderingPlayers} of regions) {
+                if (cells.has(id)) {
+                    // 상대방의 영역이면서 중립성과 인접하지 않은 경우 완전히 금지
+                    if (borderingPlayers.size === 1) {
+                        const oppositeColor = color === 'var(--accent-blue)' ? 'orange' : 'blue';
+                        if (borderingPlayers.has(oppositeColor)) {
+                            // 중립성과 인접해있는지 확인
+                            if (!isAdjacentToNeutral(id)) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 임시로 돌을 놓아보기
+            cell.style.backgroundColor = color;
+            
+            // 자충수인지 확인 (중립성 고려)
+            let isSuicide = false;
+            if (countLiberties(id) === 0) {
+                const capturedGroups = findCapturedGroups();
+                let canCapture = false;
+                
+                for (let group of capturedGroups) {
+                    const capturedCell = document.getElementById(group[0]);
+                    if (capturedCell && !capturedCell.classList.contains('gray') && 
+                        capturedCell.style.backgroundColor !== color) {
+                        canCapture = true;
+                        break;
+                    }
+                }
+                
+                if (!canCapture) {
+                    isSuicide = true;
+                }
+            }
+
+            // 임시로 놓은 돌 제거
+            cell.style.backgroundColor = '';
+            
+            return !isSuicide;
+        }
+
+        // 중립성과 인접해있는지 확인
+        function isAdjacentToNeutral(position) {
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            
+            // 상하좌우 방향 검사
+            const directions = [[-1,0], [1,0], [0,-1], [0,1]];
+            
+            for (let [dx, dy] of directions) {
+                const newColIdx = colIdx + dx;
+                const newRow = rowNum + dy;
+                
+                if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                    const newId = `${COLS[newColIdx]}${newRow}`;
+                    const cell = document.getElementById(newId);
+                    
+                    if (cell && cell.classList.contains('gray')) {
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
+        }
+
+        function findConnectedEmptySpaces(startId) {
+            const emptySpaces = new Set();
+            const visited = new Set();
+            const queue = [startId];
+            visited.add(startId);
+            
+            while (queue.length > 0) {
+                const currentId = queue.shift();
+                const cell = document.getElementById(currentId);
+                
+                if (!cell || cell.classList.contains('gray')) continue;
+                if (!cell.style.backgroundColor) {
+                    emptySpaces.add(currentId);
+                    
+                    // 8방향(상하좌우 + 대각선) 이웃 칸 확인
+                    const [col, row] = currentId.split('');
+                    const colIdx = COLS.indexOf(col);
+                    const rowNum = parseInt(row);
+
+            const neighbors = [
+                        // 상하좌우
+                        colIdx > 0 ? `${COLS[colIdx-1]}${row}` : null,  // 왼쪽
+                        colIdx < 8 ? `${COLS[colIdx+1]}${row}` : null,  // 오른쪽
+                        rowNum > 1 ? `${col}${rowNum-1}` : null,        // 위
+                        rowNum < 9 ? `${col}${rowNum+1}` : null,        // 아래
+                        // 대각선
+                        (colIdx > 0 && rowNum > 1) ? `${COLS[colIdx-1]}${rowNum-1}` : null,  // 왼쪽 위
+                        (colIdx < 8 && rowNum > 1) ? `${COLS[colIdx+1]}${rowNum-1}` : null,  // 오른쪽 위
+                        (colIdx > 0 && rowNum < 9) ? `${COLS[colIdx-1]}${rowNum+1}` : null,  // 왼쪽 아래
+                        (colIdx < 8 && rowNum < 9) ? `${COLS[colIdx+1]}${rowNum+1}` : null   // 오른쪽 아래
+                    ].filter(n => n !== null);
+
+            for (let neighbor of neighbors) {
+                        if (!visited.has(neighbor)) {
+                            visited.add(neighbor);
+                            queue.push(neighbor);
+                        }
+                    }
+                }
+            }
+            
+            return emptySpaces;
+        }
+
+        function findBoundary(emptySpaces) {
+            const boundary = new Set();
+            
+            for (let space of emptySpaces) {
+                const [col, row] = space.split('');
+                const colIdx = COLS.indexOf(col);
+                const rowNum = parseInt(row);
+                
+                // 8방향(상하좌우 + 대각선) 이웃 칸 확인
+                const neighbors = [
+                    // 상하좌우
+                    colIdx > 0 ? `${COLS[colIdx-1]}${row}` : null,  // 왼쪽
+                    colIdx < 8 ? `${COLS[colIdx+1]}${row}` : null,  // 오른쪽
+                    rowNum > 1 ? `${col}${rowNum-1}` : null,        // 위
+                    rowNum < 9 ? `${col}${rowNum+1}` : null,        // 아래
+                    // 대각선
+                    (colIdx > 0 && rowNum > 1) ? `${COLS[colIdx-1]}${rowNum-1}` : null,  // 왼쪽 위
+                    (colIdx < 8 && rowNum > 1) ? `${COLS[colIdx+1]}${rowNum-1}` : null,  // 오른쪽 위
+                    (colIdx > 0 && rowNum < 9) ? `${COLS[colIdx-1]}${rowNum+1}` : null,  // 왼쪽 아래
+                    (colIdx < 8 && rowNum < 9) ? `${COLS[colIdx+1]}${rowNum+1}` : null   // 오른쪽 아래
+                ].filter(n => n !== null);
+
+                for (let neighbor of neighbors) {
+                    const cell = document.getElementById(neighbor);
+                    if (cell && !emptySpaces.has(neighbor) && 
+                        (cell.style.backgroundColor || cell.classList.contains('gray'))) {
+                        boundary.add(neighbor);
+                    }
+                }
+            }
+            
+            return boundary;
+        }
+
+        function findCapturedGroups() {
+            const visited = new Set();
+            const capturedGroups = [];
+            const allGroups = [];
+
+            // 모든 돌 그룹 찾기
+            for (let i = 1; i <= 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    const id = `${COLS[j]}${i}`;
+                    const cell = document.getElementById(id);
+                    if (!visited.has(id) && cell && cell.style.backgroundColor && !cell.classList.contains('gray')) {
+                        const group = [];
+                        const color = cell.style.backgroundColor;
+                        findStoneGroup(id, color, group, visited);
+                        allGroups.push({group, color});
+                    }
+                }
+            }
+
+            // 각 그룹의 자유도 체크 (중립성을 통한 포위 고려)
+            for (let {group, color} of allGroups) {
+                if (!hasLibertiesWithNeutral(group)) {
+                    capturedGroups.push(group);
+                }
+            }
+
+            return capturedGroups;
+        }
+
+        // 중립성을 고려한 자유도 확인
+        function hasLibertiesWithNeutral(group) {
+            const liberties = new Set();
+            const neutralConnections = new Set();
+
+            for (let id of group) {
+                const [col, row] = id.split('');
+                const colIdx = COLS.indexOf(col);
+                const rowNum = parseInt(row);
+                const color = document.getElementById(id).style.backgroundColor;
+
+                // 상하좌우 검사
+                const directions = [[-1,0], [1,0], [0,-1], [0,1]];
+                for (let [dx, dy] of directions) {
+                    const newColIdx = colIdx + dx;
+                    const newRow = rowNum + dy;
+                    
+                    if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                        const newId = `${COLS[newColIdx]}${newRow}`;
+                        const cell = document.getElementById(newId);
+                        
+                        if (cell) {
+                            // 일반적인 자유점
+                            if (!cell.style.backgroundColor && !cell.classList.contains('gray')) {
+                                liberties.add(newId);
+                            }
+                            // 중립성을 통한 포위 확인
+                            else if (cell.classList.contains('gray')) {
+                                // 중립성 반대편 확인
+                                const oppositeColIdx = colIdx + dx * 2;
+                                const oppositeRow = rowNum + dy * 2;
+                                
+                                if (oppositeColIdx >= 0 && oppositeColIdx < COLS.length && oppositeRow >= 1 && oppositeRow <= 9) {
+                                    const oppositeId = `${COLS[oppositeColIdx]}${oppositeRow}`;
+                                    const oppositeCell = document.getElementById(oppositeId);
+                                    
+                                    // 반대편이 상대 돌이면 이 방향은 자유점이 아님
+                                    if (oppositeCell && oppositeCell.style.backgroundColor && 
+                                        oppositeCell.style.backgroundColor !== color) {
+                                        neutralConnections.add(newId);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 모든 방향이 중립성을 통해 포위되었는지 확인
+            for (let liberty of liberties) {
+                // 일반적인 자유점이 하나라도 있으면 살아있음
+                if (!neutralConnections.has(liberty)) {
+                    return true;
+                }
+            }
+
+            // 중립성을 통해 모든 방향이 포위되었다면 잡힘
+            return liberties.size > 0 && liberties.size > neutralConnections.size;
+        }
+
+        // 돌 그룹 찾기 (중립성 고려)
+        function findStoneGroup(id, color, group, visited) {
+            if (visited.has(id)) return;
+            
+                const cell = document.getElementById(id);
+            if (!cell) return;
+
+            if (cell.style.backgroundColor === color) {
+                visited.add(id);
+                group.push(id);
+
+                const [col, row] = id.split('');
+                const colIdx = COLS.indexOf(col);
+                const rowNum = parseInt(row);
+
+                // 상하좌우 방향으로 연결된 돌 찾기
+                const directions = [[-1,0], [1,0], [0,-1], [0,1]];
+                for (let [dx, dy] of directions) {
+                    const newColIdx = colIdx + dx;
+                    const newRow = rowNum + dy;
+                    
+                    if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                        const newId = `${COLS[newColIdx]}${newRow}`;
+                        const nextCell = document.getElementById(newId);
+                        
+                        // 같은 색 돌이거나 중립성을 통해 연결된 경우
+                        if (nextCell) {
+                            if (nextCell.style.backgroundColor === color) {
+                                findStoneGroup(newId, color, group, visited);
+                            }
+                            // 중립성을 통한 연결 확인
+                            else if (nextCell.classList.contains('gray')) {
+                                const oppositeColIdx = colIdx + dx * 2;
+                                const oppositeRow = rowNum + dy * 2;
+                                
+                                if (oppositeColIdx >= 0 && oppositeColIdx < COLS.length && oppositeRow >= 1 && oppositeRow <= 9) {
+                                    const oppositeId = `${COLS[oppositeColIdx]}${oppositeRow}`;
+                                    const oppositeCell = document.getElementById(oppositeId);
+                                    
+                                    if (oppositeCell && oppositeCell.style.backgroundColor === color) {
+                                        findStoneGroup(oppositeId, color, group, visited);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function updateStats() {
+            // 2.5집 덤 추가
+            const orangeTotal = yellowCells + 2.5;
+            stats.innerHTML = `
+                <span style="color: var(--accent-blue);">청: ${blueCells}집</span> | 
+                <span style="color: var(--accent-orange);">주황: ${orangeTotal}집 (덤 2.5)</span>
+            `;
+        }
+
+        function resetGame() {
+            clickCount = 0;
+            clickHistory = [];
+            redoStack = [];
+            blueCells = 0;
+            yellowCells = 0;
+            currentColumn = 0;
+            currentRow = 0;
+            currentPlayer = null;
+            isAIEnabled = false;
+            AIPlayer = null;
+
+            // 모든 셀 초기화
+            for (let i = 1; i <= 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    const id = `${COLS[j]}${i}`;
+                    const cell = document.getElementById(id);
+                    if (!cell.classList.contains('gray')) {
+                        cell.style.backgroundColor = '';
+                        cell.innerHTML = '';
+                        cell.classList.add('clickable');
+                        cell.addEventListener('click', handleClick);
+                    }
+                }
+            }
+            
+            // 기록 초기화
+            resetRecord();
+            updateButtonState();
+            updateStats();
+        }
+
+        function addChatMessage(type, message) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = message;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                addChatMessage('player', `플레이어 ${currentPlayer}: ${message}`);
+                input.value = '';
+            }
+        }
+
+        // 엔터키로 메시지 전송
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        undoBtn.addEventListener('click', undo);
+        redoBtn.addEventListener('click', redo);
+        updateButtonState();
+        updateStats();
+
+        function AIMove() {
+            console.log('AI Move called');
+            if (!gameStarted) {
+                console.log('Game not started');
+                return;
+            }
+
+            const currentTurn = clickCount % 2 === 0 ? 1 : 2;
+            console.log('AI Move - Current turn:', currentTurn, 'AI Player:', AIPlayer, 'Click count:', clickCount);
+            
+            if (currentTurn !== AIPlayer) {
+                console.log('Not AI turn');
+                return;
+            }
+
+            let selectedMove = null;
+
+            // 1. 상대방이 큰 영역을 만들 수 있는 위치 체크 및 방어
+            selectedMove = findDefensivePosition();
+            
+            // 2. 자신의 영역 확장
+            if (!selectedMove) {
+                selectedMove = findTerritoryExpansionMove();
+            }
+
+            // 3. 기존 돌 보호
+            if (!selectedMove) {
+                selectedMove = findProtectiveMove();
+            }
+
+            // 4. 안전한 기본 수
+            if (!selectedMove) {
+                selectedMove = findSafeDefaultMove();
+            }
+
+            if (selectedMove) {
+                makeMove(selectedMove);
+            }
+        }
+
+        // 모든 빈 칸 가져오기
+        function getAllEmptyCells() {
+            const emptyCells = [];
+            for (let i = 1; i <= 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    const id = `${COLS[j]}${i}`;
+                    const cell = document.getElementById(id);
+                    if (cell && !cell.style.backgroundColor && !cell.classList.contains('gray')) {
+                        emptyCells.push(id);
+                    }
+                }
+            }
+            return emptyCells;
+        }
+
+        // AI가 돌을 놓는 함수
+        function makeMove(position) {
+            const cell = document.getElementById(position);
+            if (cell && !cell.style.backgroundColor && !cell.classList.contains('gray')) {
+                // AI의 색상을 좌석에 따라 결정
+                const color = AIPlayer === 1 ? 'var(--accent-blue)' : 'var(--accent-orange)';
+                
+                cell.style.backgroundColor = color;
+                const castle = document.createElement('div');
+                castle.className = 'castle';
+                castle.style.color = color;
+                cell.innerHTML = '';
+                cell.appendChild(castle);
+                cell.removeEventListener('click', handleClick);
+                cell.classList.remove('clickable');
+
+                clickCount++;
+                addRecord(position, color, clickCount);
+                clickHistory.push({id: position, color: color, count: clickCount});
+                redoStack = [];
+                updateButtonState();
+
+                checkAndFillSurroundedAreas();
+                updateStats();
+                addChatMessage('system', `AI가 ${position}에 수를 뒀습니다.`);
+
+                // AI vs AI 모드에서 다음 AI의 턴 처리
+                const isAIvsAI = document.getElementById('seat1').querySelector('p').textContent === 'AI 플레이어' &&
+                                document.getElementById('seat2').querySelector('p').textContent === 'AI 플레이어';
+                if (isAIvsAI && gameStarted) {
+                    // 다음 AI의 턴
+                    AIPlayer = AIPlayer === 1 ? 2 : 1;  // AI 플레이어 전환
+                    setTimeout(() => {
+                        AIMove();
+                    }, 1000);
+                }
+            }
+        }
+
+        // 상대방의 큰 영역 생성 가능성 체크 및 방어
+        function findDefensivePosition() {
+            const emptyCells = getAllEmptyCells();
+            let bestMove = null;
+            let maxThreat = 0;
+
+            // 각 빈 칸에 대해 상대가 둘 경우 만들어질 수 있는 위협 평가
+            for (let cell of emptyCells) {
+                const threatScore = evaluateThreatScore(cell);
+                if (threatScore > maxThreat) {
+                    const defenseMove = findBestDefenseMove(cell);
+                    if (defenseMove) {
+                        const defenseEffectiveness = evaluateDefenseEffectiveness(defenseMove);
+                        if (defenseEffectiveness > maxThreat) {
+                            maxThreat = defenseEffectiveness;
+                            bestMove = defenseMove;
+                        }
+                    }
+                }
+            }
+
+            return bestMove;
+        }
+
+        // 위협 점수 평가
+        function evaluateThreatScore(position) {
+            let score = 0;
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+
+            // 1. 직선 연결 위협
+            const straightThreat = evaluateStraightThreat(position);
+            score += straightThreat * 2;
+
+            // 2. 대각선 연결 위협
+            const diagonalThreat = evaluateDiagonalThreat(position);
+            score += diagonalThreat * 3; // 대각선 연결에 더 높은 가중치
+
+            // 3. 영역 형성 위협
+            const territoryThreat = simulateOpponentTerritory(position);
+            score += territoryThreat;
+
+            return score;
+        }
+
+        // 직선 연결 위협 평가
+        function evaluateStraightThreat(position) {
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            let threat = 0;
+
+            // 상하좌우 방향 검사
+            const directions = [[-1,0], [1,0], [0,-1], [0,1]];
+
+                for (let [dx, dy] of directions) {
+                let consecutiveStones = 0;
+                let emptySpaces = 0;
+                
+                // 한 방향으로 3칸까지 검사
+                for (let i = 1; i <= 3; i++) {
+                    const newColIdx = colIdx + dx * i;
+                    const newRow = rowNum + dy * i;
+                    
+                    if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                        const newId = `${COLS[newColIdx]}${newRow}`;
+                        const cell = document.getElementById(newId);
+                        
+                        if (cell) {
+                            if (cell.style.backgroundColor === 'var(--accent-blue)') {
+                                consecutiveStones++;
+                            } else if (!cell.style.backgroundColor && !cell.classList.contains('gray')) {
+                                emptySpaces++;
+                            }
+                        }
+                    }
+                }
+                
+                // 연속된 돌과 빈 공간의 조합으로 위협 평가
+                if (consecutiveStones + emptySpaces >= 3) {
+                    threat += consecutiveStones * 2 + emptySpaces;
+                }
+            }
+            
+            return threat;
+        }
+
+        // 대각선 연결 위협 평가
+        function evaluateDiagonalThreat(position) {
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            let threat = 0;
+
+            // 대각선 방향 검사
+            const diagonals = [[-1,-1], [-1,1], [1,-1], [1,1]];
+            
+            for (let [dx, dy] of diagonals) {
+                let consecutiveStones = 0;
+                let emptySpaces = 0;
+                
+                // 한 방향으로 3칸까지 검사
+                for (let i = 1; i <= 3; i++) {
+                    const newColIdx = colIdx + dx * i;
+                    const newRow = rowNum + dy * i;
+                    
+                    if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                        const newId = `${COLS[newColIdx]}${newRow}`;
+                        const cell = document.getElementById(newId);
+                        
+                        if (cell) {
+                            if (cell.style.backgroundColor === 'var(--accent-blue)') {
+                                consecutiveStones++;
+                            } else if (!cell.style.backgroundColor && !cell.classList.contains('gray')) {
+                                emptySpaces++;
+                            }
+                        }
+                    }
+                }
+                
+                // 대각선 연결의 위협 평가
+                if (consecutiveStones + emptySpaces >= 3) {
+                    threat += consecutiveStones * 3 + emptySpaces * 2; // 대각선에 더 높은 가중치
+                }
+            }
+            
+            return threat;
+        }
+
+        // 최적의 방어 위치 찾기
+        function findBestDefenseMove(threatPosition) {
+            const [col, row] = threatPosition.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            
+            // 방어 후보 위치들 (2-2, 3-3 포인트)
+            const candidates = [
+                // 2-2 포인트
+                {dx: -2, dy: -2}, {dx: -2, dy: 2},
+                {dx: 2, dy: -2}, {dx: 2, dy: 2},
+                // 3-3 포인트
+                {dx: -3, dy: -3}, {dx: -3, dy: 3},
+                {dx: 3, dy: -3}, {dx: 3, dy: 3}
+            ];
+
+            let bestCandidate = null;
+            let maxScore = -Infinity;
+
+            for (let {dx, dy} of candidates) {
+                    const newColIdx = colIdx + dx;
+                    const newRow = rowNum + dy;
+                
+                if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                    const newId = `${COLS[newColIdx]}${newRow}`;
+                    
+                    // A1과 1선은 완전히 배제
+                    if (newId === 'A1' || newRow === 1 || newRow === 9 || newColIdx === 0 || newColIdx === 8) {
+                        continue;
+                    }
+                    
+                    const cell = document.getElementById(newId);
+                    
+                    if (cell && !cell.style.backgroundColor && !cell.classList.contains('gray')) {
+                        // 방어 효과 평가
+                        const defenseScore = evaluateDefenseEffectiveness(newId);
+                        if (defenseScore > maxScore) {
+                            maxScore = defenseScore;
+                            bestCandidate = newId;
+                        }
+                    }
+                }
+            }
+
+            return bestCandidate;
+        }
+
+        // 방어 효과 평가
+        function evaluateDefenseEffectiveness(position) {
+            let score = 0;
+            
+            // 1. 직선 연결 방어
+            const straightDefense = evaluateStraightDefense(position);
+            score += straightDefense * 2;
+
+            // 2. 대각선 연결 방어
+            const diagonalDefense = evaluateDiagonalDefense(position);
+            score += diagonalDefense * 3;
+
+            // 3. 자유도
+            score += countLiberties(position) * 2;
+
+            // 4. 영역 형성 가능성
+            const potentialTerritory = simulateTerritory(position, 'var(--accent-orange)');
+            score += potentialTerritory;
+
+            return score;
+        }
+
+        // 직선 방어 평가
+        function evaluateStraightDefense(position) {
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            let defense = 0;
+
+            // 상하좌우 방향 검사
+            const directions = [[-1,0], [1,0], [0,-1], [0,1]];
+            
+            for (let [dx, dy] of directions) {
+                let friendlyStones = 0;
+                let emptySpaces = 0;
+                
+                // 한 방향으로 3칸까지 검사
+                for (let i = 1; i <= 3; i++) {
+                    const newColIdx = colIdx + dx * i;
+                    const newRow = rowNum + dy * i;
+                    
+                    if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                        const newId = `${COLS[newColIdx]}${newRow}`;
+                        const cell = document.getElementById(newId);
+                        
+                        if (cell) {
+                            if (cell.style.backgroundColor === 'var(--accent-orange)') {
+                                friendlyStones++;
+                            } else if (!cell.style.backgroundColor && !cell.classList.contains('gray')) {
+                                emptySpaces++;
+                            }
+                        }
+                    }
+                }
+                
+                // 방어 효과 평가
+                if (friendlyStones + emptySpaces >= 3) {
+                    defense += friendlyStones * 2 + emptySpaces;
+                }
+            }
+            
+            return defense;
+        }
+
+        // 대각선 방어 평가
+        function evaluateDiagonalDefense(position) {
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            let defense = 0;
+
+            // 대각선 방향 검사
+            const diagonals = [[-1,-1], [-1,1], [1,-1], [1,1]];
+            
+            for (let [dx, dy] of diagonals) {
+                let friendlyStones = 0;
+                let emptySpaces = 0;
+                
+                // 한 방향으로 3칸까지 검사
+                for (let i = 1; i <= 3; i++) {
+                    const newColIdx = colIdx + dx * i;
+                    const newRow = rowNum + dy * i;
+                    
+                    if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                        const newId = `${COLS[newColIdx]}${newRow}`;
+                        const cell = document.getElementById(newId);
+                        
+                        if (cell) {
+                            if (cell.style.backgroundColor === 'var(--accent-orange)') {
+                                friendlyStones++;
+                            } else if (!cell.style.backgroundColor && !cell.classList.contains('gray')) {
+                                emptySpaces++;
+                            }
+                        }
+                    }
+                }
+                
+                // 대각선 방어 효과 평가
+                if (friendlyStones + emptySpaces >= 3) {
+                    defense += friendlyStones * 3 + emptySpaces * 2;
+                }
+            }
+            
+            return defense;
+        }
+
+        // 영역 확장을 위한 수 찾기
+        function findTerritoryExpansionMove() {
+            const emptyCells = getAllEmptyCells();
+            let bestMove = null;
+            let maxExpansion = -1;
+
+            // 1선과 모서리를 제외한 유효한 위치들만 필터링
+            const validCells = emptyCells.filter(cell => {
+                const [col, row] = cell.split('');
+                const colIdx = COLS.indexOf(col);
+                const rowNum = parseInt(row);
+                
+                // 1선과 모서리 완전 배제
+                if (rowNum === 1 || rowNum === 9 || colIdx === 0 || colIdx === 8) {
+                    return false;
+                }
+                
+                return true;
+            });
+
+            for (let cell of validCells) {
+                const expansionScore = evaluateExpansionPotential(cell);
+                if (expansionScore > maxExpansion) {
+                    maxExpansion = expansionScore;
+                    bestMove = cell;
+                }
+            }
+
+            return bestMove;
+        }
+
+        // 영역 확장 가능성 평가
+        function evaluateExpansionPotential(position) {
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            
+            // 1선과 모서리는 완전히 배제
+            if (rowNum === 1 || rowNum === 9 || colIdx === 0 || colIdx === 8) {
+                return -Infinity;
+            }
+
+            // 현재 영역 크기
+            const currentTerritory = {
+                orange: yellowCells,
+                blue: blueCells
+            };
+
+            // 해당 위치에 돌을 놓았을 때의 영역 크기 시뮬레이션
+            const potentialTerritory = simulateTerritory(position, 'var(--accent-orange)');
+            
+            // 영역 증가량 계산
+            const territoryGain = potentialTerritory - currentTerritory.orange;
+            
+            // 상대방 영역과의 차이도 고려
+            const territoryDiff = currentTerritory.orange - currentTerritory.blue;
+            
+            return territoryGain * 2 + (territoryDiff < 0 ? 5 : 0);  // 지고 있을 때 영역 확장에 더 높은 가중치
+        }
+
+        // 특정 위치에 돌을 놓았을 때의 영역 크기 시뮬레이션
+        function simulateTerritory(position, color) {
+            const cell = document.getElementById(position);
+            if (!cell) return 0;
+
+            // 임시로 돌 놓기
+            cell.style.backgroundColor = color;
+            
+            // 영역 크기 계산
+            const regions = findEmptyRegions();
+            let totalSize = 0;
+            
+            for (let {cells, borderingPlayers} of regions) {
+                if (borderingPlayers.size === 1 && 
+                    borderingPlayers.has(color === 'var(--accent-orange)' ? 'orange' : 'blue')) {
+                    totalSize += cells.size;
+                }
+            }
+
+            // 임시 돌 제거
+            cell.style.backgroundColor = '';
+            
+            return totalSize;
+        }
+
+        // 기존 돌 보호를 위한 수 찾기
+        function findProtectiveMove() {
+            const vulnerableStones = findVulnerableStones();
+            if (vulnerableStones.length === 0) return null;
+
+            let bestMove = null;
+            let maxProtection = -1;
+
+            for (let stone of vulnerableStones) {
+                const protectivePosition = findBestProtectivePosition(stone);
+                if (protectivePosition) {
+                    const protectionScore = evaluateProtection(protectivePosition);
+                    if (protectionScore > maxProtection) {
+                        maxProtection = protectionScore;
+                        bestMove = protectivePosition;
+                    }
+                }
+            }
+
+            return bestMove;
+        }
+
+        // 위험한 돌 찾기
+        function findVulnerableStones() {
+            const vulnerableStones = [];
+            
+            for (let i = 1; i <= 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    const id = `${COLS[j]}${i}`;
+            const cell = document.getElementById(id);
+                    
+                    if (cell && cell.style.backgroundColor === 'var(--accent-orange)') {
+                        if (countLiberties(id) <= 2) {  // 자유도가 2 이하인 돌을 위험한 돌로 간주
+                            vulnerableStones.push(id);
+                        }
+                    }
+                }
+            }
+            
+            return vulnerableStones;
+        }
+
+        // 돌 보호를 위한 최적의 위치 찾기
+        function findBestProtectivePosition(stonePosition) {
+            const [col, row] = stonePosition.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            
+            // 주변 8방향 검사
+            const directions = [
+                [-1,-1], [-1,0], [-1,1],
+                [0,-1],         [0,1],
+                [1,-1],  [1,0],  [1,1]
+            ];
+            
+            let bestPosition = null;
+            let maxLiberties = -1;
+            
+            for (let [dx, dy] of directions) {
+                const newColIdx = colIdx + dx;
+                const newRow = rowNum + dy;
+                
+                if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                    const newId = `${COLS[newColIdx]}${newRow}`;
+                                        
+                    const cell = document.getElementById(newId);
+                    
+                    if (cell && !cell.style.backgroundColor && !cell.classList.contains('gray')) {
+                        const liberties = countLiberties(newId);
+                        if (liberties > maxLiberties) {
+                            maxLiberties = liberties;
+                            bestPosition = newId;
+                        }
+                    }
+                }
+            }
+            
+            return bestPosition;
+        }
+
+        // 보호 효과 평가
+        function evaluateProtection(position) {
+            let score = 0;
+            
+            // 1. 자유도
+            score += countLiberties(position) * 2;
+            
+            // 2. 연결된 돌의 수
+            const connectedStones = countConnectedStones(position);
+            score += connectedStones * 3;
+            
+            // 3. 영역 형성 가능성
+            const potentialTerritory = simulateTerritory(position, 'var(--accent-orange)');
+            score += potentialTerritory;
+            
+            return score;
+        }
+
+        // 연결된 돌의 수 계산
+        function countConnectedStones(position) {
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            let count = 0;
+            
+            const directions = [[-1,0], [1,0], [0,-1], [0,1]];
+            
+            for (let [dx, dy] of directions) {
+                const newColIdx = colIdx + dx;
+                const newRow = rowNum + dy;
+                
+                if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                    const newId = `${COLS[newColIdx]}${newRow}`;
+                    const cell = document.getElementById(newId);
+                    
+                    if (cell && cell.style.backgroundColor === 'var(--accent-orange)') {
+                        count++;
+                    }
+                }
+            }
+            
+            return count;
+        }
+
+        // 안전도 평가
+        function evaluateSafetyScore(position) {
+           
+            let score = 0;
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            
+            // 1선과 모서리에 대한 엄격한 제한
+            if (rowNum === 1 || rowNum === 9 || colIdx === 0 || colIdx === 8) {
+                // 모서리는 절대 금지
+                if ((rowNum === 1 || rowNum === 9) && (colIdx === 0 || colIdx === 8)) {
+                    return score-=100;
+                }
+                
+                // 1선의 다른 위치들도 매우 큰 페널티
+                if (!isProtectingVulnerableStone(position)) {
+                    return score-=100;
+                }
+                
+                // 활로가 적은 돌을 살리는 경우에도 여전히 큰 페널티
+                score += 120; // 페널티를 더 크게 증가
+            }
+
+            // 2선과 3선 선호
+            if ((rowNum === 2 || rowNum === 3 || rowNum === 7 || rowNum === 8) &&
+                (colIdx === 1 || colIdx === 2 || colIdx === 6 || colIdx === 7)) {
+                score += 100; // 가중치 증가
+            }
+
+            // 대각선 연결 가능성 평가
+            const diagonalConnectionScore = evaluateDiagonalConnections(position);
+            score += diagonalConnectionScore * 50; // 가중치 증가
+
+            // 잠재적인 집 형성 가능성 평가
+            const territoryPotential = evaluateTerritoryPotential(position);
+            score += territoryPotential * 40; // 가중치 증가
+
+            // 자유도
+            const liberties = countLiberties(position);
+            score += liberties * 15; // 가중치 증가
+            
+            // 중앙과의 거리 (2~4칸 거리 선호)
+            const centerDistance = Math.abs(colIdx - 4) + Math.abs(rowNum - 5);
+            if (centerDistance >= 2 && centerDistance <= 4) {
+                score += 20; // 가중치 증가
+            }
+
+            return score;
+        }
+
+        // 대각선 연결 가능성 평가
+        function evaluateDiagonalConnections(position) {
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            let score = 0;
+
+            // 대각선 방향
+            const diagonals = [
+                [-1,-1], [-1,1],
+                [1,-1], [1,1]
+            ];
+
+            for (let [dx, dy] of diagonals) {
+                const newColIdx = colIdx + dx;
+                const newRow = rowNum + dy;
+                
+                if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                    const newId = `${COLS[newColIdx]}${newRow}`;
+                    const cell = document.getElementById(newId);
+                    
+                    if (cell && cell.style.backgroundColor === 'var(--accent-orange)') {
+                        // 대각선으로 연결된 돌이 있는 경우
+                        // 집을 만들 수 있는 공간이 있는지 확인
+                        const spaceId = `${COLS[colIdx]}${newRow}`; // 세로 방향 공간
+                        const spaceId2 = `${COLS[newColIdx]}${rowNum}`; // 가로 방향 공간
+                        
+                        const space1 = document.getElementById(spaceId);
+                        const space2 = document.getElementById(spaceId2);
+                        
+                        if ((space1 && !space1.style.backgroundColor && !space1.classList.contains('gray')) ||
+                            (space2 && !space2.style.backgroundColor && !space2.classList.contains('gray'))) {
+                            score += 2; // 집을 만들 수 있는 공간이 있는 경우 높은 점수
+                        }
+                    }
+                }
+            }
+
+            return score;
+        }
+
+        // 잠재적인 집 형성 가능성 평가
+        function evaluateTerritoryPotential(position) {
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            let score = 0;
+
+            // 주변 2칸 이내의 영역 평가
+            for (let i = -2; i <= 2; i++) {
+                for (let j = -2; j <= 2; j++) {
+                    const newColIdx = colIdx + i;
+                    const newRow = rowNum + j;
+                    
+                    if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                        const newId = `${COLS[newColIdx]}${newRow}`;
+                        const cell = document.getElementById(newId);
+                        
+                        if (cell && !cell.style.backgroundColor && !cell.classList.contains('gray')) {
+                            // 빈 공간이 자신의 돌로 둘러싸여 있는지 확인
+                            const surroundingScore = evaluateSurroundingStones(newId, 'var(--accent-orange)');
+                            score += surroundingScore;
+                        }
+                    }
+                }
+            }
+
+            return score;
+        }
+
+        // 주변 돌의 배치 평가
+        function evaluateSurroundingStones(position, color) {
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            let friendlyCount = 0;
+            let emptyCount = 0;
+
+            // 상하좌우 및 대각선 방향 검사
+            const directions = [
+                [-1,-1], [-1,0], [-1,1],
+                [0,-1],         [0,1],
+                [1,-1],  [1,0],  [1,1]
+            ];
+
+            for (let [dx, dy] of directions) {
+                const newColIdx = colIdx + dx;
+                const newRow = rowNum + dy;
+                
+                if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                    const newId = `${COLS[newColIdx]}${newRow}`;
+                    const cell = document.getElementById(newId);
+                    
+                    if (cell) {
+                        if (cell.style.backgroundColor === color) {
+                            friendlyCount++;
+                        } else if (!cell.style.backgroundColor && !cell.classList.contains('gray')) {
+                            emptyCount++;
+                        }
+                    }
+                }
+            }
+
+            // 자신의 돌이 많고 빈 공간이 적절히 있는 경우 높은 점수
+            return friendlyCount * 2 + (emptyCount > 0 ? 1 : 0);
+        }
+
+        // 활로가 적은 돌을 보호하기 위한 수인지 확인하는 함수 강화
+        function isProtectingVulnerableStone(position) {
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+
+            // 주변 돌 확인
+            const directions = [[-1,0], [1,0], [0,-1], [0,1]];
+            let criticalStoneFound = false;
+            
+            for (let [dx, dy] of directions) {
+                const newColIdx = colIdx + dx;
+                const newRow = rowNum + dy;
+                
+                if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                    const newId = `${COLS[newColIdx]}${newRow}`;
+                    const cell = document.getElementById(newId);
+                    
+                    if (cell && cell.style.backgroundColor === 'var(--accent-orange)') {
+                        // 인접한 자신의 돌의 활로 수 확인
+                        const liberties = countLiberties(newId);
+                        if (liberties <= 2) {
+                            // 추가 검사: 이 돌이 실제로 위험한 상황인지 확인
+                            const isCritical = isStoneCritical(newId);
+                            if (isCritical) {
+                                criticalStoneFound = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return criticalStoneFound;
+        }
+
+        // 돌이 실제로 위험한 상황인지 확인
+        function isStoneCritical(position) {
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            
+            // 주변에 상대의 돌이 있는지 확인
+            const directions = [[-1,0], [1,0], [0,-1], [0,1]];
+            let enemyAdjacent = false;
+            
+            for (let [dx, dy] of directions) {
+                const newColIdx = colIdx + dx;
+                const newRow = rowNum + dy;
+                
+                if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                    const newId = `${COLS[newColIdx]}${newRow}`;
+                    const cell = document.getElementById(newId);
+                    
+                    if (cell && cell.style.backgroundColor === 'var(--accent-blue)') {
+                        enemyAdjacent = true;
+                        break;
+                    }
+                }
+            }
+            
+            return enemyAdjacent;
+        }
+
+        // 안전한 기본 수 찾기
+        function findSafeDefaultMove() {
+            const emptyCells = getAllEmptyCells();
+            let bestMove = null;
+            let maxSafety = -Infinity;
+
+            // A1과 1선을 완전히 배제한 후보 위치들
+            const validCells = emptyCells.filter(cell => {
+                const [col, row] = cell.split('');
+                const colIdx = COLS.indexOf(col);
+                const rowNum = parseInt(row);
+                              
+                // 1선과 모서리 완전 배제
+                if (rowNum === 1 || rowNum === 9 || colIdx === 0 || colIdx === 8) {
+                    // 활로가 2개 이하인 돌을 살리는 경우에만 예외적으로 허용
+                    return isProtectingVulnerableStone(cell);
+                }
+                
+                return true;
+            });
+
+            // // 첫 수는 3-3 포인트만 고려
+            // if (clickCount === 1) {
+            //     const firstMovePoints = ['C3', 'C7', 'G3', 'G7'];
+            //     for (let point of firstMovePoints) {
+            //         const color = AIPlayer === 1 ? 'var(--accent-blue)' : 'var(--accent-orange)';
+            //         if (validCells.includes(point) && isValidMove(point, color)) {
+            //             return point;
+            //         }
+            //     }
+            // }
+
+            // 유효한 위치들 중에서 최선의 수 선택
+            for (let cell of validCells) {
+                const color = AIPlayer === 1 ? 'var(--accent-blue)' : 'var(--accent-orange)';
+                if (isValidMove(cell, color)) {
+                    const safetyScore = evaluateSafetyScore(cell);
+                    if (safetyScore > maxSafety) {
+                        maxSafety = safetyScore;
+                        bestMove = cell;
+                    }
+                }
+            }
+
+            // 만약 유효한 수가 없다면 (극히 드문 경우)
+            if (!bestMove) {
+                // 1선과 모서리를 제외한 위치 중에서 선택
+                for (let cell of emptyCells) {
+                    const [col, row] = cell.split('');
+                    const colIdx = COLS.indexOf(col);
+                    const rowNum = parseInt(row);
+                    
+                    if (rowNum === 1 || rowNum === 9 || colIdx === 0 || colIdx === 8) continue;
+                    
+                    const color = AIPlayer === 1 ? 'var(--accent-blue)' : 'var(--accent-orange)';
+                    if (isValidMove(cell, color)) {
+                        const safetyScore = evaluateSafetyScore(cell);
+                        if (safetyScore > maxSafety) {
+                            maxSafety = safetyScore;
+                            bestMove = cell;
+                        }
+                    }
+                }
+            }
+
+            return bestMove;
+        }
+
+        // 특정 색깔의 돌과의 최소 거리 계산
+        function getMinDistanceToColor(position, color) {
+            const [col, row] = position.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            let minDistance = 100;
+            
+            for (let i = 1; i <= 9; i++) {
+                for (let j = 0; j < 9; j++) {
+                    const id = `${COLS[j]}${i}`;
+                    const cell = document.getElementById(id);
+                    
+                    if (cell && cell.style.backgroundColor === color) {
+                        const distance = Math.abs(j - colIdx) + Math.abs(i - rowNum);
+                        minDistance = Math.min(minDistance, distance);
+                    }
+                }
+            }
+            
+            return minDistance === 100 ? 0 : minDistance;
+        }
+
+        // 자유도(liberty) 계산
+        function countLiberties(id) {
+                const [col, row] = id.split('');
+            const colIdx = COLS.indexOf(col);
+            const rowNum = parseInt(row);
+            let libertyCount = 0;
+            
+            // 상하좌우 방향 검사
+            const directions = [[-1,0], [1,0], [0,-1], [0,1]];
+            
+            for (let [dx, dy] of directions) {
+                const newColIdx = colIdx + dx;
+                const newRow = rowNum + dy;
+                
+                if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
+                    const newId = `${COLS[newColIdx]}${newRow}`;
+                    const cell = document.getElementById(newId);
+                    if (cell && !cell.style.backgroundColor && !cell.classList.contains('gray')) {
+                        libertyCount++;
+                    }
+                }
+            }
+            
+            return libertyCount;
+        }
+
+        // 상대가 특정 위치에 뒀을 때 만들어질 수 있는 영역 크기 시뮬레이션
+        function simulateOpponentTerritory(position) {
+            const cell = document.getElementById(position);
+            if (!cell) return 0;
+
+            // 임시로 상대 돌 놓기
+            cell.style.backgroundColor = 'var(--accent-blue)';
+            
+            // 영역 크기 계산
+            const regions = findEmptyRegions();
+            let maxSize = 0;
+            
+            for (let {cells, borderingPlayers} of regions) {
+                if (borderingPlayers.size === 1 && borderingPlayers.has('blue')) {
+                    if (cells.size > maxSize) {
+                        maxSize = cells.size;
+                    }
+                }
+            }
+
+            // 임시 돌 제거
+            cell.style.backgroundColor = '';
+            
+            return maxSize;
+        }
+
+        // 게임 모드 설정
+        function setGameMode(mode) {
+            if (gameStarted) {
+                addChatMessage('system', '게임이 이미 시작되었습니다. 새 게임을 시작하려면 페이지를 새로고침하세요.');
+                return;
+            }
+
+            const normalBtn = document.getElementById('normalMode');
+            const localBtn = document.getElementById('localMode');
+            
+            if (mode === 'local') {
+                isLocalMode = true;
+                localBtn.classList.add('active');
+                normalBtn.classList.remove('active');
+                
+                // 로컬 모드에서는 좌석 선택 UI 숨기기
+                document.querySelector('.player-seats').style.display = 'none';
+                
+                // 게임 바로 시작
+                gameStarted = true;
+                firstPlayer = 1;
+                addChatMessage('system', '로컬 모드가 시작되었습니다. 청이 선공입니다!');
+            } else {
+                isLocalMode = false;
+                normalBtn.classList.add('active');
+                localBtn.classList.remove('active');
+                
+                // 일반 모드에서는 좌석 선택 UI 표시
+                document.querySelector('.player-seats').style.display = 'flex';
+                
+                // 게임 상태 초기화
+                gameStarted = false;
+                firstPlayer = null;
+                addChatMessage('system', '일반 모드가 선택되었습니다. 좌석을 선택해주세요.');
+            }
+
+            // 게임 상태 초기화
+            resetGame();
+        }
+    </script>
+</body>
+</html>
