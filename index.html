@@ -1603,12 +1603,7 @@
                 
                 if (newColIdx >= 0 && newColIdx < COLS.length && newRow >= 1 && newRow <= 9) {
                     const newId = `${COLS[newColIdx]}${newRow}`;
-                    
-                    // A1과 1선은 완전히 배제
-                    if (newId === 'A1' || newRow === 1 || newRow === 9 || newColIdx === 0 || newColIdx === 8) {
-                        continue;
-                    }
-                    
+                                       
                     const cell = document.getElementById(newId);
                     
                     if (cell && !cell.style.backgroundColor && !cell.classList.contains('gray')) {
@@ -2168,7 +2163,6 @@
             let bestMove = null;
             let maxSafety = -Infinity;
 
-            // A1과 1선을 완전히 배제한 후보 위치들
             const validCells = emptyCells.filter(cell => {
                 const [col, row] = cell.split('');
                 const colIdx = COLS.indexOf(col);
