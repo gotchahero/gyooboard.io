@@ -2352,6 +2352,7 @@
         let localIceCandidates = [];
         let remoteIceCandidates = [];
         let isConnected = false;
+        let offerCreated = false;
 
         // 방 생성/참여 함수
         function createOrJoinRoom() {
@@ -2381,46 +2382,58 @@
                 ]
             };
 
-            peerConnection = new RTCPeerConnection(configuration);
+            try {
+                peerConnection = new RTCPeerConnection(configuration);
 
-            // ICE 후보 수집
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    localIceCandidates.push(event.candidate);
-                    if (dataChannel && dataChannel.readyState === 'open') {
-                        dataChannel.send(JSON.stringify({
-                            type: 'ice',
-                            candidate: event.candidate
-                        }));
+                // ICE 후보 수집
+                peerConnection.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        localIceCandidates.push(event.candidate);
+                        if (dataChannel && dataChannel.readyState === 'open') {
+                            dataChannel.send(JSON.stringify({
+                                type: 'ice',
+                                candidate: event.candidate
+                            }));
+                        }
                     }
-                }
-            };
-
-            // 연결 상태 변경 감지
-            peerConnection.onconnectionstatechange = () => {
-                addChatMessage('system', `연결 상태: ${peerConnection.connectionState}`);
-                if (peerConnection.connectionState === 'connected') {
-                    isConnected = true;
-                    addChatMessage('system', '상대방과 연결되었습니다!');
-                    if (isHost) {
-                        startGame();
-                    }
-                } else if (peerConnection.connectionState === 'disconnected' || 
-                          peerConnection.connectionState === 'failed') {
-                    isConnected = false;
-                    addChatMessage('system', '연결이 끊어졌습니다. 페이지를 새로고침하세요.');
-                }
-            };
-
-            if (isHost) {
-                dataChannel = peerConnection.createDataChannel('gameData');
-                setupDataChannel(dataChannel);
-                createOffer();
-            } else {
-                peerConnection.ondatachannel = (event) => {
-                    dataChannel = event.channel;
-                    setupDataChannel(dataChannel);
                 };
+
+                // 연결 상태 변경 감지
+                peerConnection.onconnectionstatechange = () => {
+                    addChatMessage('system', `연결 상태: ${peerConnection.connectionState}`);
+                    if (peerConnection.connectionState === 'connected') {
+                        isConnected = true;
+                        addChatMessage('system', '상대방과 연결되었습니다!');
+                        if (isHost) {
+                            startGame();
+                        }
+                    } else if (peerConnection.connectionState === 'disconnected' || 
+                              peerConnection.connectionState === 'failed') {
+                        isConnected = false;
+                        addChatMessage('system', '연결이 끊어졌습니다. 페이지를 새로고침하세요.');
+                        // 자동 재연결 시도
+                        setTimeout(() => {
+                            if (!isConnected) {
+                                addChatMessage('system', '재연결을 시도합니다...');
+                                initializePeerConnection();
+                            }
+                        }, 5000);
+                    }
+                };
+
+                if (isHost) {
+                    dataChannel = peerConnection.createDataChannel('gameData');
+                    setupDataChannel(dataChannel);
+                    createOffer();
+                } else {
+                    peerConnection.ondatachannel = (event) => {
+                        dataChannel = event.channel;
+                        setupDataChannel(dataChannel);
+                    };
+                }
+            } catch (error) {
+                console.error('WebRTC 초기화 실패:', error);
+                addChatMessage('system', 'WebRTC 초기화에 실패했습니다. 페이지를 새로고침하세요.');
             }
         }
 
@@ -2428,6 +2441,7 @@
         function setupDataChannel(channel) {
             channel.onopen = () => {
                 addChatMessage('system', '데이터 채널이 열렸습니다.');
+                isConnected = true;
                 // ICE 후보 교환
                 if (isHost) {
                     localIceCandidates.forEach(candidate => {
@@ -2462,12 +2476,15 @@
 
         // 오퍼 생성 및 전송
         async function createOffer() {
+            if (offerCreated) return;
+            
             try {
                 const offer = await peerConnection.createOffer({
                     offerToReceiveAudio: false,
                     offerToReceiveVideo: false
                 });
                 await peerConnection.setLocalDescription(offer);
+                offerCreated = true;
                 
                 if (dataChannel && dataChannel.readyState === 'open') {
                     dataChannel.send(JSON.stringify({
@@ -2478,6 +2495,7 @@
             } catch (error) {
                 console.error('오퍼 생성 실패:', error);
                 addChatMessage('system', '오퍼 생성에 실패했습니다.');
+                offerCreated = false;
             }
         }
 
