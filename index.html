@@ -2354,6 +2354,7 @@
         let isConnected = false;
         let offerCreated = false;
         let isLocalTest = false;
+        let offerTimeout = null;
 
         // 방 생성/참여 함수
         function createOrJoinRoom() {
@@ -2364,6 +2365,7 @@
                 window.location.hash = roomId;
                 isHost = true;
                 addChatMessage('system', `방이 생성되었습니다. ID: ${roomId}`);
+                addChatMessage('system', '상대방에게 다음 URL을 공유하세요: ' + window.location.href);
                 
                 // 로컬 테스트 모드 확인
                 if (window.location.href.includes('localhost') || window.location.href.includes('127.0.0.1')) {
@@ -2397,10 +2399,15 @@
                     { urls: 'stun:stun3.l.google.com:19302' },
                     { urls: 'stun:stun4.l.google.com:19302' }
                 ],
-                iceCandidatePoolSize: 10
+                iceCandidatePoolSize: 10,
+                iceTransportPolicy: 'all'
             };
 
             try {
+                if (peerConnection) {
+                    peerConnection.close();
+                }
+
                 peerConnection = new RTCPeerConnection(configuration);
 
                 // ICE 후보 수집
@@ -2430,15 +2437,13 @@
                         isConnected = false;
                         addChatMessage('system', '연결이 끊어졌습니다. 페이지를 새로고침하세요.');
                         
-                        // 로컬 테스트 모드에서는 자동 재연결 시도
-                        if (isLocalTest) {
-                            setTimeout(() => {
-                                if (!isConnected) {
-                                    addChatMessage('system', '재연결을 시도합니다...');
-                                    initializePeerConnection();
-                                }
-                            }, 2000);
-                        }
+                        // 재연결 시도
+                        setTimeout(() => {
+                            if (!isConnected) {
+                                addChatMessage('system', '재연결을 시도합니다...');
+                                initializePeerConnection();
+                            }
+                        }, 2000);
                     }
                 };
 
@@ -2456,13 +2461,11 @@
                 console.error('WebRTC 초기화 실패:', error);
                 addChatMessage('system', 'WebRTC 초기화에 실패했습니다. 페이지를 새로고침하세요.');
                 
-                // 로컬 테스트 모드에서는 자동 재시도
-                if (isLocalTest) {
-                    setTimeout(() => {
-                        addChatMessage('system', 'WebRTC 초기화를 재시도합니다...');
-                        initializePeerConnection();
-                    }, 2000);
-                }
+                // 재시도
+                setTimeout(() => {
+                    addChatMessage('system', 'WebRTC 초기화를 재시도합니다...');
+                    initializePeerConnection();
+                }, 2000);
             }
         }
 
@@ -2515,16 +2518,52 @@
                 await peerConnection.setLocalDescription(offer);
                 offerCreated = true;
                 
-                if (dataChannel && dataChannel.readyState === 'open') {
-                    dataChannel.send(JSON.stringify({
-                        type: 'offer',
-                        offer: offer
-                    }));
-                }
+                // 오퍼 전송 시도
+                const sendOffer = () => {
+                    if (dataChannel && dataChannel.readyState === 'open') {
+                        dataChannel.send(JSON.stringify({
+                            type: 'offer',
+                            offer: offer
+                        }));
+                        if (offerTimeout) {
+                            clearTimeout(offerTimeout);
+                        }
+                    } else {
+                        offerTimeout = setTimeout(sendOffer, 1000);
+                    }
+                };
+                
+                sendOffer();
             } catch (error) {
                 console.error('오퍼 생성 실패:', error);
                 addChatMessage('system', '오퍼 생성에 실패했습니다.');
                 offerCreated = false;
+            }
+        }
+
+        // 오퍼 처리
+        async function handleOffer(offer) {
+            try {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                
+                // 앤서 전송 시도
+                const sendAnswer = () => {
+                    if (dataChannel && dataChannel.readyState === 'open') {
+                        dataChannel.send(JSON.stringify({
+                            type: 'answer',
+                            answer: answer
+                        }));
+                    } else {
+                        setTimeout(sendAnswer, 1000);
+                    }
+                };
+                
+                sendAnswer();
+            } catch (error) {
+                console.error('오퍼 처리 실패:', error);
+                addChatMessage('system', '오퍼 처리에 실패했습니다.');
             }
         }
 
@@ -2546,25 +2585,6 @@
                 case 'chat':
                     addChatMessage('opponent', data.message);
                     break;
-            }
-        }
-
-        // 오퍼 처리
-        async function handleOffer(offer) {
-            try {
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-                const answer = await peerConnection.createAnswer();
-                await peerConnection.setLocalDescription(answer);
-                
-                if (dataChannel && dataChannel.readyState === 'open') {
-                    dataChannel.send(JSON.stringify({
-                        type: 'answer',
-                        answer: answer
-                    }));
-                }
-            } catch (error) {
-                console.error('오퍼 처리 실패:', error);
-                addChatMessage('system', '오퍼 처리에 실패했습니다.');
             }
         }
 
