@@ -2353,6 +2353,7 @@
         let remoteIceCandidates = [];
         let isConnected = false;
         let offerCreated = false;
+        let isLocalTest = false;
 
         // 방 생성/참여 함수
         function createOrJoinRoom() {
@@ -2363,11 +2364,25 @@
                 window.location.hash = roomId;
                 isHost = true;
                 addChatMessage('system', `방이 생성되었습니다. ID: ${roomId}`);
+                
+                // 로컬 테스트 모드 확인
+                if (window.location.href.includes('localhost') || window.location.href.includes('127.0.0.1')) {
+                    isLocalTest = true;
+                    addChatMessage('system', '로컬 테스트 모드로 시작합니다.');
+                }
+                
                 initializePeerConnection();
             } else {
                 // 기존 방 참여
                 isHost = false;
                 addChatMessage('system', `방에 참여했습니다. ID: ${roomId}`);
+                
+                // 로컬 테스트 모드 확인
+                if (window.location.href.includes('localhost') || window.location.href.includes('127.0.0.1')) {
+                    isLocalTest = true;
+                    addChatMessage('system', '로컬 테스트 모드로 참여합니다.');
+                }
+                
                 initializePeerConnection();
             }
         }
@@ -2378,8 +2393,11 @@
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
                     { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' }
-                ]
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun3.l.google.com:19302' },
+                    { urls: 'stun:stun4.l.google.com:19302' }
+                ],
+                iceCandidatePoolSize: 10
             };
 
             try {
@@ -2411,13 +2429,16 @@
                               peerConnection.connectionState === 'failed') {
                         isConnected = false;
                         addChatMessage('system', '연결이 끊어졌습니다. 페이지를 새로고침하세요.');
-                        // 자동 재연결 시도
-                        setTimeout(() => {
-                            if (!isConnected) {
-                                addChatMessage('system', '재연결을 시도합니다...');
-                                initializePeerConnection();
-                            }
-                        }, 5000);
+                        
+                        // 로컬 테스트 모드에서는 자동 재연결 시도
+                        if (isLocalTest) {
+                            setTimeout(() => {
+                                if (!isConnected) {
+                                    addChatMessage('system', '재연결을 시도합니다...');
+                                    initializePeerConnection();
+                                }
+                            }, 2000);
+                        }
                     }
                 };
 
@@ -2434,6 +2455,14 @@
             } catch (error) {
                 console.error('WebRTC 초기화 실패:', error);
                 addChatMessage('system', 'WebRTC 초기화에 실패했습니다. 페이지를 새로고침하세요.');
+                
+                // 로컬 테스트 모드에서는 자동 재시도
+                if (isLocalTest) {
+                    setTimeout(() => {
+                        addChatMessage('system', 'WebRTC 초기화를 재시도합니다...');
+                        initializePeerConnection();
+                    }, 2000);
+                }
             }
         }
 
